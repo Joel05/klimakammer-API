@@ -32,7 +32,11 @@ app = FastAPI(
 @app.get("/air/quality", tags=["Air"])
 def root():
     bus = SMBus(1)
+<<<<<<< HEAD
     b = bus.read_byte_data(80, 0)
+=======
+    b = bus.write_byte_data(85, 0, 0)
+>>>>>>> 8624514 (I2C-Test implementiert)
     print(b)
     bus.close()
     return {"message": "Hello World"}
