@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from smbus2 import SMBus
+
+
 
 description = """
 """
@@ -28,6 +31,10 @@ app = FastAPI(
 #region Air
 @app.get("/air/quality", tags=["Air"])
 def root():
+    bus = SMBus(1)
+    b = bus.read_byte_data(80, 0)
+    print(b)
+    bus.close()
     return {"message": "Hello World"}
 
 @app.get("/air/co2", tags=["Air"])
