@@ -28,9 +28,59 @@ app = FastAPI(
     openapi_tags=tags_metadata
 )
 
+modules = {
+    "Air":0x55,
+    "Water":0x11,
+    "Sun":0x12,
+    "PSU":0x13,
+    "Misc":0x14
+}
+
+sensors = {
+    "AirQuality":0x01,
+    "AirCO2":0x02,
+    "AirTemperature":0x03,
+    "AirHumidity":0x04,
+    "FanSpeed":0x05,
+    "WaterLevel":0x06,
+    "WaterFlow":0x07,
+    "WaterTemperature":0x08,
+    "SunIntensity":0x09,
+    "PSUVoltage":0x0A,
+    "PSUCurrent":0x0B,
+    "PSUPower":0x0C,
+    "PSUStatus":0x0D,
+    "PSUFault":0x0E,
+    "Door":0x0F
+}
+
+def get_data(module, sensor):
+    module_adress = modules.get(module)
+    sensor_code = sensors.get(sensor)
+    bus = SMBus(1)
+    b = bus.read_byte_data(module_adress, sensor_code)
+    bus.close()
+    return b
+
+def set_data_instant(module, sensor, data):
+    module_adress = modules.get(module)
+    sensor_code = sensors.get(sensor)
+    bus = SMBus(1)
+    bus.write_byte_data(module_adress, sensor_code, data)
+    bus.close()
+
+#Incomplete!!!
+def set_data_schedule(module, sensor, data, starttime, endtime):
+    module_adress = modules.get(module)
+    sensor_code = sensors.get(sensor)
+    bus = SMBus(1)
+    bus.write_byte_data(module_adress, sensor_code, data)
+    bus.close()  
+
 #region Air
 @app.get("/air/quality", tags=["Air"])
 def root():
+<<<<<<< HEAD
     bus = SMBus(1)
 <<<<<<< HEAD
     b = bus.read_byte_data(80, 0)
@@ -39,6 +89,9 @@ def root():
 >>>>>>> 8624514 (I2C-Test implementiert)
     print(b)
     bus.close()
+=======
+    get_data("Air", "AirQuality")
+>>>>>>> 77c4c11 (Added rudimentary I2C support)
     return {"message": "Hello World"}
 
 @app.get("/air/co2", tags=["Air"])
