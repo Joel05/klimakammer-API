@@ -73,8 +73,9 @@ def set_data_instant(module, sensor, data):
 def set_data_schedule(module, sensor, data, starttime, endtime):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
+    data_byte = data.to_bytes(1, byteorder="big") + starttime.to_bytes(4, byteorder="big") + endtime.to_bytes(4, byteorder="big")
     bus = SMBus(1)
-    bus.write_byte_data(module_adress, sensor_code, data)
+    bus.write_i2c_block_data(module_adress, sensor_code, data_byte)
     bus.close()  
 
 #region Air
@@ -96,6 +97,7 @@ def root():
 
 @app.get("/air/co2", tags=["Air"])
 def root():
+    set_data_schedule("Air", "AirCO2", 125, 1699995531, 1699995900)
     return {"message": "Hello World"}
 
 @app.get("/air/temperature", tags=["Air"])
