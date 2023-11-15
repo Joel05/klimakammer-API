@@ -10,8 +10,10 @@ def is_raspberry_pi():
 if is_raspberry_pi():
     from smbus2 import SMBus
 
-description = """
-"""
+description =   """
+                All returnvalues are in the range of 0-255.
+                Inputvalues are in the range of 0-255, except for the schedule starttime and endtime, which are in the range of 0-4294967295 (Unix timestamp).
+                """
 
 
 # Tags
@@ -92,57 +94,62 @@ def set_data_schedule(module, sensor, data, starttime, endtime):
 
 #region Air
 @app.get("/air/quality", tags=["Air"])
-def root():
+def get_air_quality():
+    """
+    Get the air quality data.
+
+    :return: Air quality data.
+    """
     data = get_data("Air", "AirQuality")
     return {"AirQuality": data}
 
 @app.get("/air/co2", tags=["Air"])
-def root():
+def get_air_CO2():
     data = get_data("Air", "AirCO2")
     return {"CO2": data}
 
 @app.get("/air/temperature", tags=["Air"])
-def root():
+def get_air_temperature():
     data = get_data("Air", "AirTemperature")
     return {"Air": data}
 
 @app.get("/air/humidity", tags=["Air"])
-def root():
+def get_air_humidity():
     data = get_data("Air", "AirHumidity")
     return {"Humidity": data}
 
 @app.get("/air/fanspeed", tags=["Air"])
-def root():
+def get_air_fanspeed():
     data = get_data("Air", "FanSpeed")
     return {"Fanspeed": data}
 
 @app.put("/air/manual/temperature:{temperature}", tags=["Air"])
-def root(temperature):
+def put_air_temperature(temperature):
     set_data_instant("Air", "AirTemperature", temperature)
     return {"message": temperature}
 
 @app.put("/air/manual/humidity:{humidity}", tags=["Air"])
-def root(humidity):
+def put_air_humidity(humidity):
     set_data_instant("Air", "AirHumidity", humidity)
     return {"message": humidity}
 
 @app.put("/air/manual/fanspeed:{fanspeed}", tags=["Air"])
-def root(fanspeed):
+def put_air_fanspeed(fanspeed):
     set_data_instant("Air", "FanSpeed", fanspeed)
     return {"message": fanspeed}
 
 @app.put("/air/schedule/temperature:{temperature}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
-def root(temperature, starttime, endtime):
+def put_air_schedule_temperature(temperature, starttime, endtime):
     set_data_schedule("Air", "AirCO2", 125, 1699995531, 1699995900)
     return {"message": temperature + starttime + endtime}
 
 @app.put("/air/schedule/humidity:{humidity}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
-def root(humidity, starttime, endtime):
+def put_air_schedule_humidity(humidity, starttime, endtime):
     set_data_schedule("Air", "Humidity", 125, 1699995531, 1699995900)
     return {"message": humidity + starttime + endtime}
 
 @app.put("/air/schedule/fanspeed:{fanspeed}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
-def root(fanspeed, starttime, endtime):
+def put_air_schedule_fanspeed(fanspeed, starttime, endtime):
     set_data_schedule("Air", "FanSpeed", 125, 1699995531, 1699995900)
     return {"message": fanspeed + starttime + endtime}
 #endregion
