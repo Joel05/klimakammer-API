@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 from random import randrange
 
-import sys
-isWindows = sys.platform.startswith('win')
+import platform
+def is_raspberry_pi():
+    # Überprüfe, ob die Plattform "arm" und der Prozessor "arm" ist
+    return platform.machine().startswith('arm') and platform.system() == 'Linux'
 
-if not isWindows:
+
+if is_raspberry_pi():
     from smbus2 import SMBus
 
 description = """
@@ -61,7 +64,7 @@ sensors = {
 def get_data(module, sensor):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
-    if isWindows:
+    if not is_raspberry_pi():
         return randrange(255)
     bus = SMBus(1)
     b = bus.read_byte_data(module_adress, sensor_code)
@@ -71,7 +74,7 @@ def get_data(module, sensor):
 def set_data_instant(module, sensor, data):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
-    if isWindows:
+    if not is_raspberry_pi():
         return
     bus = SMBus(1)
     bus.write_byte_data(module_adress, sensor_code, data)
@@ -80,7 +83,7 @@ def set_data_instant(module, sensor, data):
 def set_data_schedule(module, sensor, data, starttime, endtime):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
-    if isWindows:
+    if not is_raspberry_pi():
         return
     data_byte = data.to_bytes(1, byteorder="big") + starttime.to_bytes(4, byteorder="big") + endtime.to_bytes(4, byteorder="big")
     bus = SMBus(1)
