@@ -1,7 +1,11 @@
 from fastapi import FastAPI
-from smbus2 import SMBus
+from random import randrange
 
+import sys
+isWindows = sys.platform.startswith('win')
 
+if not isWindows:
+    from smbus2 import SMBus
 
 description = """
 """
@@ -57,6 +61,8 @@ sensors = {
 def get_data(module, sensor):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
+    if isWindows:
+        return randrange(255)
     bus = SMBus(1)
     b = bus.read_byte_data(module_adress, sensor_code)
     bus.close()
@@ -65,14 +71,17 @@ def get_data(module, sensor):
 def set_data_instant(module, sensor, data):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
+    if isWindows:
+        return
     bus = SMBus(1)
     bus.write_byte_data(module_adress, sensor_code, data)
     bus.close()
 
-#Incomplete!!!
 def set_data_schedule(module, sensor, data, starttime, endtime):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
+    if isWindows:
+        return
     data_byte = data.to_bytes(1, byteorder="big") + starttime.to_bytes(4, byteorder="big") + endtime.to_bytes(4, byteorder="big")
     bus = SMBus(1)
     bus.write_i2c_block_data(module_adress, sensor_code, data_byte)
@@ -81,70 +90,84 @@ def set_data_schedule(module, sensor, data, starttime, endtime):
 #region Air
 @app.get("/air/quality", tags=["Air"])
 def root():
-    get_data("Air", "AirQuality")
-    return {"message": "Hello World"}
+    data = get_data("Air", "AirQuality")
+    return {"AirQuality": data}
 
 @app.get("/air/co2", tags=["Air"])
 def root():
-    set_data_schedule("Air", "AirCO2", 125, 1699995531, 1699995900)
-    return {"message": "Hello World"}
+    data = get_data("Air", "AirCO2")
+    return {"CO2": data}
 
 @app.get("/air/temperature", tags=["Air"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("Air", "AirTemperature")
+    return {"Air": data}
 
 @app.get("/air/humidity", tags=["Air"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("Air", "AirHumidity")
+    return {"Humidity": data}
 
 @app.get("/air/fanspeed", tags=["Air"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("Air", "FanSpeed")
+    return {"Fanspeed": data}
 
 @app.put("/air/manual/temperature:{temperature}", tags=["Air"])
 def root(temperature):
+    set_data_instant("Air", "AirTemperature", temperature)
     return {"message": temperature}
 
 @app.put("/air/manual/humidity:{humidity}", tags=["Air"])
 def root(humidity):
+    set_data_instant("Air", "AirHumidity", humidity)
     return {"message": humidity}
 
 @app.put("/air/manual/fanspeed:{fanspeed}", tags=["Air"])
 def root(fanspeed):
+    set_data_instant("Air", "FanSpeed", fanspeed)
     return {"message": fanspeed}
 
 @app.put("/air/schedule/temperature:{temperature}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
 def root(temperature, starttime, endtime):
+    set_data_schedule("Air", "AirCO2", 125, 1699995531, 1699995900)
     return {"message": temperature + starttime + endtime}
 
 @app.put("/air/schedule/humidity:{humidity}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
 def root(humidity, starttime, endtime):
+    set_data_schedule("Air", "Humidity", 125, 1699995531, 1699995900)
     return {"message": humidity + starttime + endtime}
 
 @app.put("/air/schedule/fanspeed:{fanspeed}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
 def root(fanspeed, starttime, endtime):
+    set_data_schedule("Air", "FanSpeed", 125, 1699995531, 1699995900)
     return {"message": fanspeed + starttime + endtime}
 #endregion
 
 #region Water
 @app.get("/water/level", tags=["Water"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("Water", "WaterLevel")
+    return {"Level": data}
 
 @app.get("/water/flow", tags=["Water"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("Water", "WaterFlow")
+    return {"Flow": data}
 
 @app.get("/water/temperature", tags=["Water"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("Water", "WaterTemperature")
+    return {"Temperature": data}
 
 @app.put("/water/manual/flow:{flow}", tags=["Water"])
 def root(flow):
+    set_data_instant("Water", "WaterFlow", flow)
     return {"message": flow}
 
 @app.put("/water/schedule/flow:{flow}:starttime:{starttime}:endtime:{endtime}", tags=["Water"])
 def root(flow, starttime, endtime):
+    set_data_schedule("Water", "WaterFlow", flow, starttime, endtime)
     return {"message": flow + starttime + endtime}
 
 #endregion
@@ -152,45 +175,55 @@ def root(flow, starttime, endtime):
 #region Sun
 @app.get("/sun/intensity", tags=["Sun"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("Sun", "SunIntensity")
+    return {"Intensity": data}
 
 @app.put("/sun/manual/intensity:{intensity}", tags=["Sun"])
 def root(intensity):
+    set_data_instant("Sun", "SunIntensity", intensity)
     return {"message": intensity}
 
 @app.put("/sun/schedule/intensity:{intensity}:starttime:{starttime}:endtime:{endtime}", tags=["Sun"])
 def root(intensity, starttime, endtime):
+    set_data_schedule("Sun", "SunIntensity", intensity, starttime, endtime)
     return {"message": intensity + starttime + endtime}
 #endregion
 
 #region PSU
 @app.get("/psu/voltage", tags=["PSU"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("PSU", "PSUVoltage")
+    return {"PSUVoltage": data}
 
 @app.get("/psu/current", tags=["PSU"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("PSU", "PSUCurrent")
+    return {"PSUCurrent": data}
 
 @app.get("/psu/power", tags=["PSU"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("PSU", "PSUPower")
+    return {"PSUPower": data}
 
 @app.get("/psu/status", tags=["PSU"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("PSU", "PSUStatus")
+    return {"PSUStatus": data}
 
 @app.get("/psu/fault", tags=["PSU"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("PSU", "PSUFault")
+    return {"PSUFault": data}
 
 @app.post("/psu/clear", tags=["PSU"])
 def root():
+    set_data_instant("PSU", "PSUFault", 0)
     return {"message": "All errors cleared"}
 #endregion
 
 #region Misc
 @app.get("/misc/door", tags=["Misc"])
 def root():
-    return {"message": "Hello World"}
+    data = get_data("Misc", "Door")
+    return {"Door": data}
 #endregion
