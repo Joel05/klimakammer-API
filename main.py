@@ -81,18 +81,7 @@ def set_data_schedule(module, sensor, data, starttime, endtime):
 #region Air
 @app.get("/air/quality", tags=["Air"])
 def root():
-<<<<<<< HEAD
-    bus = SMBus(1)
-<<<<<<< HEAD
-    b = bus.read_byte_data(80, 0)
-=======
-    b = bus.write_byte_data(85, 0, 0)
->>>>>>> 8624514 (I2C-Test implementiert)
-    print(b)
-    bus.close()
-=======
     get_data("Air", "AirQuality")
->>>>>>> 77c4c11 (Added rudimentary I2C support)
     return {"message": "Hello World"}
 
 @app.get("/air/co2", tags=["Air"])
