@@ -31,8 +31,8 @@ app = FastAPI(
     summary="API for controlling the Klimakammer",
     version="0.0.1",
     license_info={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+        "name": "GPL-3.0 License",
+        "url": "https://www.gnu.org/licenses/gpl-3.0.html",
     },
     openapi_tags=tags_metadata
 )
@@ -156,27 +156,27 @@ def put_air_schedule_fanspeed(fanspeed, starttime, endtime):
 
 #region Water
 @app.get("/water/level", tags=["Water"])
-def root():
+def get_water_level():
     data = get_data("Water", "WaterLevel")
     return {"Level": data}
 
 @app.get("/water/flow", tags=["Water"])
-def root():
+def get_water_flow():
     data = get_data("Water", "WaterFlow")
     return {"Flow": data}
 
 @app.get("/water/temperature", tags=["Water"])
-def root():
+def get_water_temperature():
     data = get_data("Water", "WaterTemperature")
     return {"Temperature": data}
 
 @app.put("/water/manual/flow:{flow}", tags=["Water"])
-def root(flow):
+def put_water_manual_flow(flow):
     set_data_instant("Water", "WaterFlow", flow)
     return {"message": flow}
 
 @app.put("/water/schedule/flow:{flow}:starttime:{starttime}:endtime:{endtime}", tags=["Water"])
-def root(flow, starttime, endtime):
+def put_water_schedule_flow(flow, starttime, endtime):
     set_data_schedule("Water", "WaterFlow", flow, starttime, endtime)
     return {"message": flow + starttime + endtime}
 
@@ -184,56 +184,56 @@ def root(flow, starttime, endtime):
 
 #region Sun
 @app.get("/sun/intensity", tags=["Sun"])
-def root():
+def get_sun_intensity():
     data = get_data("Sun", "SunIntensity")
     return {"Intensity": data}
 
 @app.put("/sun/manual/intensity:{intensity}", tags=["Sun"])
-def root(intensity):
+def put_sun_manual_intensity(intensity):
     set_data_instant("Sun", "SunIntensity", intensity)
     return {"message": intensity}
 
 @app.put("/sun/schedule/intensity:{intensity}:starttime:{starttime}:endtime:{endtime}", tags=["Sun"])
-def root(intensity, starttime, endtime):
+def put_sun_schedule_intensity(intensity, starttime, endtime):
     set_data_schedule("Sun", "SunIntensity", intensity, starttime, endtime)
     return {"message": intensity + starttime + endtime}
 #endregion
 
 #region PSU
 @app.get("/psu/voltage", tags=["PSU"])
-def root():
+def get_psu_voltage():
     data = get_data("PSU", "PSUVoltage")
     return {"PSUVoltage": data}
 
 @app.get("/psu/current", tags=["PSU"])
-def root():
+def get_psu_current():
     data = get_data("PSU", "PSUCurrent")
     return {"PSUCurrent": data}
 
 @app.get("/psu/power", tags=["PSU"])
-def root():
+def get_psu_power():
     data = get_data("PSU", "PSUPower")
     return {"PSUPower": data}
 
 @app.get("/psu/status", tags=["PSU"])
-def root():
+def get_psu_status():
     data = get_data("PSU", "PSUStatus")
     return {"PSUStatus": data}
 
 @app.get("/psu/fault", tags=["PSU"])
-def root():
+def get_psu_fault():
     data = get_data("PSU", "PSUFault")
     return {"PSUFault": data}
 
 @app.post("/psu/clear", tags=["PSU"])
-def root():
+def clear_psu_fault():
     set_data_instant("PSU", "PSUFault", 0)
     return {"message": "All errors cleared"}
 #endregion
 
 #region Misc
 @app.get("/misc/door", tags=["Misc"])
-def root():
+def get_misc_door():
     data = get_data("Misc", "Door")
     return {"Door": data}
 #endregion
