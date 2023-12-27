@@ -72,15 +72,19 @@ class ScheduleSet(BaseModel):
 class ManualSet(BaseModel):
     data: int
 
+
+#Change to use 32bit floats
 def get_data(module, sensor):
-    module_adress = modules.get(module)
+    module_address = modules.get(module)
     sensor_code = sensors.get(sensor)
     if not is_raspberry_pi():
         return randrange(255)
     bus = SMBus(1)
-    b = bus.read_byte_data(module_adress, sensor_code)
+    bus.read_i2c_block_data(module_address, sensor_code, 4) #Workaround for bug in Firmware, read is always one step behind
+    data_bytes = bus.read_i2c_block_data(module_address, sensor_code, 4)
     bus.close()
-    return b
+    data = float.from_bytes(data_bytes, byteorder='little', signed=True)
+    return data
 
 def set_data_instant(module, sensor, data):
     module_adress = modules.get(module)
