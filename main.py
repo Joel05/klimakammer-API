@@ -1,19 +1,25 @@
+### TODO: Add support for 2 power supplies, be able to set fan speed
+
+
+
+import struct
+import time
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from random import randrange
 
 import platform
 def is_raspberry_pi():
-    # Überprüfe, ob die Plattform "arm" und der Prozessor "arm" ist
-    return platform.machine().startswith('arm') and platform.system() == 'Linux'
+    # Überprüfe, ob die Plattform "linux" und der Prozessor "aarch64" ist
+    return platform.machine().startswith('aarch64') and platform.system() == 'Linux'
 
 
 if is_raspberry_pi():
     from smbus2 import SMBus
 
 description =   """
-                All returnvalues are in the range of 0-255.
-                Inputvalues are in the range of 0-255, except for the schedule starttime and endtime, which are in the range of 0-4294967295 (Unix timestamp).
+                All returnvalues are in the range of 0-100.
+                Inputvalues are in the range of 0-100, except for the schedule starttime and endtime, which are in the range of 0-4294967295 (Unix timestamp).
                 """
 
 
@@ -59,9 +65,12 @@ sensors = {
     "PSUVoltage":0x0A,
     "PSUCurrent":0x0B,
     "PSUPower":0x0C,
-    "PSUStatus":0x0D,
-    "PSUFault":0x0E,
-    "Door":0x0F
+    "PSUGridVoltage":0x0D,
+    "PSUGridCurrent":0x0E,
+    "PSUGridPower":0x0F,
+    "PSUInternalTemperature":0x10,
+    "PSUFanSpeed":0x11,
+    "Door":0x20
 }
 
 class ScheduleSet(BaseModel):
@@ -78,12 +87,14 @@ def get_data(module, sensor):
     module_address = modules.get(module)
     sensor_code = sensors.get(sensor)
     if not is_raspberry_pi():
-        return randrange(255)
+        return randrange(100)
     bus = SMBus(1)
     bus.read_i2c_block_data(module_address, sensor_code, 4) #Workaround for bug in Firmware, read is always one step behind
+    time.sleep(0.1)
     data_bytes = bus.read_i2c_block_data(module_address, sensor_code, 4)
     bus.close()
-    data = float.from_bytes(data_bytes, byteorder='little', signed=True)
+    print(data_bytes)
+    data = struct.unpack("<f", bytes(data_bytes))[0]
     return data
 
 def set_data_instant(module, sensor, data):
@@ -229,7 +240,32 @@ def get_psu_current():
 @app.get("/psu/power", tags=["PSU"])
 def get_psu_power():
     data = get_data("PSU", "PSUPower")
-    return {"PSUPower": data}
+    return {"PSUPower": data/1000}
+
+@app.get("/psu/gridvoltage", tags=["PSU"])
+def get_psu_gridvoltage():
+    data = get_data("PSU", "PSUGridVoltage")
+    return {"PSUGridVoltage": data}
+
+@app.get("/psu/gridcurrent", tags=["PSU"])
+def get_psu_gridcurrent():
+    data = get_data("PSU", "PSUGridCurrent")
+    return {"PSUGridCurrent": data}
+
+@app.get("/psu/gridpower", tags=["PSU"])
+def get_psu_gridpower():
+    data = get_data("PSU", "PSUGridPower")
+    return {"PSUGridPower": data/10}
+
+@app.get("/psu/internaltemperature", tags=["PSU"])
+def get_psu_internaltemperature():
+    data = get_data("PSU", "PSUInternalTemperature")
+    return {"PSUInternalTemperature": data+10} #Calibration
+
+@app.get("/psu/fanspeed", tags=["PSU"])
+def get_psu_fanspeed():
+    data = get_data("PSU", "PSUFanSpeed")
+    return {"PSUFanSpeed": data}
 
 @app.get("/psu/status", tags=["PSU"])
 def get_psu_status():
