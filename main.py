@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from random import randrange
 
 import platform
@@ -63,6 +64,14 @@ sensors = {
     "Door":0x0F
 }
 
+class ScheduleSet(BaseModel):
+    data: int
+    starttime: int
+    endtime: int
+
+class ManualSet(BaseModel):
+    data: int
+
 def get_data(module, sensor):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
@@ -91,6 +100,9 @@ def set_data_schedule(module, sensor, data, starttime, endtime):
     bus = SMBus(1)
     bus.write_i2c_block_data(module_adress, sensor_code, data_byte)
     bus.close()  
+
+
+
 
 #region Air
 @app.get("/air/quality", tags=["Air"])
@@ -123,35 +135,35 @@ def get_air_fanspeed():
     data = get_data("Air", "FanSpeed")
     return {"Fanspeed": data}
 
-@app.put("/air/manual/temperature:{temperature}", tags=["Air"])
-def put_air_temperature(temperature):
-    set_data_instant("Air", "AirTemperature", temperature)
-    return {"message": temperature}
+@app.put("/air/manual/temperature", tags=["Air"])
+def put_air_temperature(manual: ManualSet):
+    set_data_instant("Air", "AirTemperature", manual.data)
+    return {"message": manual.data}
 
-@app.put("/air/manual/humidity:{humidity}", tags=["Air"])
-def put_air_humidity(humidity):
-    set_data_instant("Air", "AirHumidity", humidity)
-    return {"message": humidity}
+@app.put("/air/manual/humidity", tags=["Air"])
+def put_air_humidity(manual: ManualSet):
+    set_data_instant("Air", "AirHumidity", manual.humidity)
+    return {"message": manual.data}
 
-@app.put("/air/manual/fanspeed:{fanspeed}", tags=["Air"])
-def put_air_fanspeed(fanspeed):
-    set_data_instant("Air", "FanSpeed", fanspeed)
-    return {"message": fanspeed}
+@app.put("/air/manual/fanspeed", tags=["Air"])
+def put_air_fanspeed(manual: ManualSet):
+    set_data_instant("Air", "FanSpeed", manual.fanspeed)
+    return {"message": manual.data}
 
-@app.put("/air/schedule/temperature:{temperature}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
-def put_air_schedule_temperature(temperature, starttime, endtime):
-    set_data_schedule("Air", "AirCO2", 125, 1699995531, 1699995900)
-    return {"message": temperature + starttime + endtime}
+@app.put("/air/schedule/temperature", tags=["Air"])
+def put_air_schedule_temperature(schedule: ScheduleSet):
+    set_data_schedule("Air", "AirCO2", schedule.data, schedule.starttime, schedule.endtime)
+    return {"message": schedule.data + schedule.starttime + schedule.endtime}
 
-@app.put("/air/schedule/humidity:{humidity}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
-def put_air_schedule_humidity(humidity, starttime, endtime):
-    set_data_schedule("Air", "Humidity", 125, 1699995531, 1699995900)
-    return {"message": humidity + starttime + endtime}
+@app.put("/air/schedule/humidity", tags=["Air"])
+def put_air_schedule_humidity(schedule: ScheduleSet):
+    set_data_schedule("Air", "Humidity", schedule.data, schedule.starttime, schedule.endtime)
+    return {"message": schedule.data + schedule.starttime + schedule.endtime}
 
-@app.put("/air/schedule/fanspeed:{fanspeed}:starttime:{starttime}:endtime:{endtime}", tags=["Air"])
-def put_air_schedule_fanspeed(fanspeed, starttime, endtime):
-    set_data_schedule("Air", "FanSpeed", 125, 1699995531, 1699995900)
-    return {"message": fanspeed + starttime + endtime}
+@app.put("/air/schedule/fanspeed", tags=["Air"])
+def put_air_schedule_fanspeed(schedule: ScheduleSet):
+    set_data_schedule("Air", "FanSpeed", schedule.data, schedule.starttime, schedule.endtime)
+    return {"message": schedule.data + schedule.starttime + schedule.endtime}
 #endregion
 
 #region Water
@@ -170,15 +182,15 @@ def get_water_temperature():
     data = get_data("Water", "WaterTemperature")
     return {"Temperature": data}
 
-@app.put("/water/manual/flow:{flow}", tags=["Water"])
-def put_water_manual_flow(flow):
-    set_data_instant("Water", "WaterFlow", flow)
-    return {"message": flow}
+@app.put("/water/manual/flow", tags=["Water"])
+def put_water_manual_flow(manual: ManualSet):
+    set_data_instant("Water", "WaterFlow", manual.data)
+    return {"message": manual.data}
 
-@app.put("/water/schedule/flow:{flow}:starttime:{starttime}:endtime:{endtime}", tags=["Water"])
-def put_water_schedule_flow(flow, starttime, endtime):
-    set_data_schedule("Water", "WaterFlow", flow, starttime, endtime)
-    return {"message": flow + starttime + endtime}
+@app.put("/water/schedule/flow", tags=["Water"])
+def put_water_schedule_flow(schedule: ScheduleSet):
+    set_data_schedule("Water", "WaterFlow", schedule.data, schedule.starttime, schedule.endtime)
+    return {"message": schedule.data + schedule.starttime + schedule.endtime}
 
 #endregion
 
@@ -188,15 +200,15 @@ def get_sun_intensity():
     data = get_data("Sun", "SunIntensity")
     return {"Intensity": data}
 
-@app.put("/sun/manual/intensity:{intensity}", tags=["Sun"])
-def put_sun_manual_intensity(intensity):
-    set_data_instant("Sun", "SunIntensity", intensity)
-    return {"message": intensity}
+@app.put("/sun/manual/intensity", tags=["Sun"])
+def put_sun_manual_intensity(manual: ManualSet):
+    set_data_instant("Sun", "SunIntensity", manual.data)
+    return {"message": manual.data}
 
-@app.put("/sun/schedule/intensity:{intensity}:starttime:{starttime}:endtime:{endtime}", tags=["Sun"])
-def put_sun_schedule_intensity(intensity, starttime, endtime):
-    set_data_schedule("Sun", "SunIntensity", intensity, starttime, endtime)
-    return {"message": intensity + starttime + endtime}
+@app.put("/sun/schedule/intensity", tags=["Sun"])
+def put_sun_schedule_intensity(schedule: ScheduleSet):
+    set_data_schedule("Sun", "SunIntensity", schedule.data, schedule.starttime, schedule.endtime)
+    return {"message": schedule.data + schedule.starttime + schedule.endtime}
 #endregion
 
 #region PSU

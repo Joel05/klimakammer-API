@@ -1,10 +1,10 @@
-GET http://127.0.0.1:8000/django HTTP/1.1
+GET http://13.50.245.130/django HTTP/1.1
 
 ###
-GET http://127.0.0.1:8000/air/quality HTTP/1.1
+GET http://13.50.245.130/air/quality HTTP/1.1
 
 ###
-PUT http://127.0.0.1:8000/air/manual/temperature:10 HTTP/1.1
+PUT http://13.50.245.130/air/manual/temperature:10 HTTP/1.1
 
 ###
-PUT http://127.0.0.1:8000/air/schedule/temperature:20:starttime:100:endtime:200 HTTP/1.1
+PUT http://13.50.245.130/air/schedule/temperature:20:starttime:100:endtime:200 HTTP/1.1
