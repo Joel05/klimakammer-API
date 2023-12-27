@@ -12,8 +12,8 @@ if is_raspberry_pi():
     from smbus2 import SMBus
 
 description =   """
-                All returnvalues are in the range of 0-255.
-                Inputvalues are in the range of 0-255, except for the schedule starttime and endtime, which are in the range of 0-4294967295 (Unix timestamp).
+                All returnvalues are in the range of 0-100.
+                Inputvalues are in the range of 0-100, except for the schedule starttime and endtime, which are in the range of 0-4294967295 (Unix timestamp).
                 """
 
 
@@ -76,7 +76,7 @@ def get_data(module, sensor):
     module_adress = modules.get(module)
     sensor_code = sensors.get(sensor)
     if not is_raspberry_pi():
-        return randrange(255)
+        return randrange(100)
     bus = SMBus(1)
     b = bus.read_byte_data(module_adress, sensor_code)
     bus.close()
