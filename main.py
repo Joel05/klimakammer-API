@@ -1,3 +1,9 @@
+### TODO: Add support for 2 power supplies, be able to set fan speed
+
+
+
+import struct
+import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -5,8 +11,8 @@ from random import randrange
 
 import platform
 def is_raspberry_pi():
-    # Überprüfe, ob die Plattform "arm" und der Prozessor "arm" ist
-    return platform.machine().startswith('arm') and platform.system() == 'Linux'
+    # Überprüfe, ob die Plattform "linux" und der Prozessor "aarch64" ist
+    return platform.machine().startswith('aarch64') and platform.system() == 'Linux'
 
 
 if is_raspberry_pi():
@@ -75,9 +81,12 @@ sensors = {
     "PSUVoltage":0x0A,
     "PSUCurrent":0x0B,
     "PSUPower":0x0C,
-    "PSUStatus":0x0D,
-    "PSUFault":0x0E,
-    "Door":0x0F
+    "PSUGridVoltage":0x0D,
+    "PSUGridCurrent":0x0E,
+    "PSUGridPower":0x0F,
+    "PSUInternalTemperature":0x10,
+    "PSUFanSpeed":0x11,
+    "Door":0x20
 }
 
 class ScheduleSet(BaseModel):
@@ -96,11 +105,15 @@ def get_data(module, sensor):
     if not is_raspberry_pi():
         return randrange(100)
     bus = SMBus(1)
-    bus.read_i2c_block_data(module_address, sensor_code, 4) #Workaround for bug in Firmware, read is always one step behind
-    data_bytes = bus.read_i2c_block_data(module_address, sensor_code, 4)
+    bus.read_i2c_block_data(module_address, sensor_code, 8) #Workaround for bug in Firmware, read is always one step behind
+    time.sleep(0.1)
+    data_bytes = bus.read_i2c_block_data(module_address, sensor_code, 8)
     bus.close()
-    data = float.from_bytes(data_bytes, byteorder='little', signed=True)
-    return data
+    data_bytes1 = data_bytes[0:4]
+    data_bytes2 = data_bytes[4:8]
+    data1 = struct.unpack("<f", bytes(data_bytes1))[0]
+    data2 = struct.unpack("<f", bytes(data_bytes2))[0]
+    return data1, data2
 
 def set_data_instant(module, sensor, data):
     module_adress = modules.get(module)
@@ -235,17 +248,42 @@ def put_sun_schedule_intensity(schedule: ScheduleSet):
 @app.get("/psu/voltage", tags=["PSU"])
 def get_psu_voltage():
     data = get_data("PSU", "PSUVoltage")
-    return {"PSUVoltage": data}
+    return {"PSUVoltage1": data[0], "PSUVoltage2": data[1]}
 
 @app.get("/psu/current", tags=["PSU"])
 def get_psu_current():
     data = get_data("PSU", "PSUCurrent")
-    return {"PSUCurrent": data}
+    return {"PSUCurrent1": data[0], "PSUCurrent2": data[1]}
 
 @app.get("/psu/power", tags=["PSU"])
 def get_psu_power():
     data = get_data("PSU", "PSUPower")
-    return {"PSUPower": data}
+    return {"PSUPower": data[0]/1000, "PSUPower2": data[1]/1000}
+
+@app.get("/psu/gridvoltage", tags=["PSU"])
+def get_psu_gridvoltage():
+    data = get_data("PSU", "PSUGridVoltage")
+    return {"PSUGridVoltage1": data[0], "PSUGridVoltage2": data[1]}
+
+@app.get("/psu/gridcurrent", tags=["PSU"])
+def get_psu_gridcurrent():
+    data = get_data("PSU", "PSUGridCurrent")
+    return {"PSUGridCurrent1": data[0], "PSUGridCurrent2": data[1]}
+
+@app.get("/psu/gridpower", tags=["PSU"])
+def get_psu_gridpower():
+    data = get_data("PSU", "PSUGridPower")
+    return {"PSUGridPower": data[0]/10, "PSUGridPower2": data[1]/10}
+
+@app.get("/psu/internaltemperature", tags=["PSU"])
+def get_psu_internaltemperature():
+    data = get_data("PSU", "PSUInternalTemperature")
+    return {"PSUInternalTemperature1": data[0]+10, "PSUInternalTemperature2": data[1]+10} #Calibration
+
+@app.get("/psu/fanspeed", tags=["PSU"])
+def get_psu_fanspeed():
+    data = get_data("PSU", "PSUFanSpeed")
+    return {"PSUFanSpeed": data[0], "PSUFanSpeed2": data[1]}
 
 @app.get("/psu/status", tags=["PSU"])
 def get_psu_status():
@@ -256,6 +294,11 @@ def get_psu_status():
 def get_psu_fault():
     data = get_data("PSU", "PSUFault")
     return {"PSUFault": data}
+
+@app.put("/psu/manual/fanspeed", tags=["PSU"])
+def put_psu_manual_fanspeed(manual: ManualSet):
+    set_data_instant("PSU", "PSUFanSpeed", round(manual.data/100))
+    return {"message": round(manual.data/100)}
 
 @app.post("/psu/clear", tags=["PSU"])
 def clear_psu_fault():
