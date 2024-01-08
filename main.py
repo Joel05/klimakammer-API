@@ -5,6 +5,7 @@
 import struct
 import time
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from random import randrange
 
@@ -43,6 +44,21 @@ app = FastAPI(
         "url": "https://www.gnu.org/licenses/gpl-3.0.html",
     },
     openapi_tags=tags_metadata
+)
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 modules = {
@@ -93,13 +109,15 @@ def get_data(module, sensor):
     if not is_raspberry_pi():
         return randrange(100)
     bus = SMBus(1)
-    bus.read_i2c_block_data(module_address, sensor_code, 4) #Workaround for bug in Firmware, read is always one step behind
+    bus.read_i2c_block_data(module_address, sensor_code, 8) #Workaround for bug in Firmware, read is always one step behind
     time.sleep(0.1)
-    data_bytes = bus.read_i2c_block_data(module_address, sensor_code, 4)
+    data_bytes = bus.read_i2c_block_data(module_address, sensor_code, 8)
     bus.close()
-    print(data_bytes)
-    data = struct.unpack("<f", bytes(data_bytes))[0]
-    return data
+    data_bytes1 = data_bytes[0:4]
+    data_bytes2 = data_bytes[4:8]
+    data1 = struct.unpack("<f", bytes(data_bytes1))[0]
+    data2 = struct.unpack("<f", bytes(data_bytes2))[0]
+    return data1, data2
 
 
 def set_data(schedule):
@@ -180,42 +198,42 @@ def get_sun_intensity():
 @app.get("/psu/voltage", tags=["PSU"])
 def get_psu_voltage():
     data = get_data("PSU", "PSUVoltage")
-    return {"PSUVoltage": data}
+    return {"PSUVoltage1": data[0], "PSUVoltage2": data[1]}
 
 @app.get("/psu/current", tags=["PSU"])
 def get_psu_current():
     data = get_data("PSU", "PSUCurrent")
-    return {"PSUCurrent": data}
+    return {"PSUCurrent1": data[0], "PSUCurrent2": data[1]}
 
 @app.get("/psu/power", tags=["PSU"])
 def get_psu_power():
     data = get_data("PSU", "PSUPower")
-    return {"PSUPower": data/1000}
+    return {"PSUPower": data[0]/1000, "PSUPower2": data[1]/1000}
 
 @app.get("/psu/gridvoltage", tags=["PSU"])
 def get_psu_gridvoltage():
     data = get_data("PSU", "PSUGridVoltage")
-    return {"PSUGridVoltage": data}
+    return {"PSUGridVoltage1": data[0], "PSUGridVoltage2": data[1]}
 
 @app.get("/psu/gridcurrent", tags=["PSU"])
 def get_psu_gridcurrent():
     data = get_data("PSU", "PSUGridCurrent")
-    return {"PSUGridCurrent": data}
+    return {"PSUGridCurrent1": data[0], "PSUGridCurrent2": data[1]}
 
 @app.get("/psu/gridpower", tags=["PSU"])
 def get_psu_gridpower():
     data = get_data("PSU", "PSUGridPower")
-    return {"PSUGridPower": data/10}
+    return {"PSUGridPower": data[0]/10, "PSUGridPower2": data[1]/10}
 
 @app.get("/psu/internaltemperature", tags=["PSU"])
 def get_psu_internaltemperature():
     data = get_data("PSU", "PSUInternalTemperature")
-    return {"PSUInternalTemperature": data+10} #Calibration
+    return {"PSUInternalTemperature1": data[0]+10, "PSUInternalTemperature2": data[1]+10} #Calibration
 
 @app.get("/psu/fanspeed", tags=["PSU"])
 def get_psu_fanspeed():
     data = get_data("PSU", "PSUFanSpeed")
-    return {"PSUFanSpeed": data}
+    return {"PSUFanSpeed": data[0], "PSUFanSpeed2": data[1]}
 
 @app.get("/psu/status", tags=["PSU"])
 def get_psu_status():
@@ -226,6 +244,11 @@ def get_psu_status():
 def get_psu_fault():
     data = get_data("PSU", "PSUFault")
     return {"PSUFault": data}
+
+@app.put("/psu/manual/fanspeed", tags=["PSU"])
+def put_psu_manual_fanspeed(manual: ManualSet):
+    set_data_instant("PSU", "PSUFanSpeed", round(manual.data/100))
+    return {"message": round(manual.data/100)}
 
 @app.post("/psu/clear", tags=["PSU"])
 def clear_psu_fault():
