@@ -245,10 +245,6 @@ def get_psu_fault():
     data = get_data("PSU", "PSUFault")
     return {"PSUFault": data}
 
-@app.put("/psu/manual/fanspeed", tags=["PSU"])
-def put_psu_manual_fanspeed(manual: ManualSet):
-    set_data_instant("PSU", "PSUFanSpeed", round(manual.data/100))
-    return {"message": round(manual.data/100)}
 
 @app.post("/psu/clear", tags=["PSU"])
 def clear_psu_fault():
