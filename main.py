@@ -30,6 +30,7 @@ tags_metadata = [
     {"name": "Sun", "description": "Endpoints related to sun intensity control"},
     {"name": "PSU", "description": "Endpoints related to power supply unit"},
     {"name": "Misc", "description": "Miscellaneous endpoints"},
+    {"name": "setValue", "description": "Set values"}
 ]
 
 app = FastAPI(
@@ -73,13 +74,16 @@ sensors = {
     "Door":0x20
 }
 
-class ScheduleSet(BaseModel):
-    data: int
-    starttime: int
-    endtime: int
+class Value(BaseModel):
+    intensity: int
+    time: int
 
-class ManualSet(BaseModel):
-    data: int
+class ScheduleSet(BaseModel):
+    UpdateID: int
+    Sonne: list[Value] | None = None
+    Regen: list[Value] | None = None
+    Wind: list[Value] | None = None
+
 
 
 #Change to use 32bit floats
@@ -97,27 +101,21 @@ def get_data(module, sensor):
     data = struct.unpack("<f", bytes(data_bytes))[0]
     return data
 
-def set_data_instant(module, sensor, data):
-    module_adress = modules.get(module)
-    sensor_code = sensors.get(sensor)
-    if not is_raspberry_pi():
-        return
-    bus = SMBus(1)
-    bus.write_byte_data(module_adress, sensor_code, data)
-    bus.close()
 
-def set_data_schedule(module, sensor, data, starttime, endtime):
-    module_adress = modules.get(module)
-    sensor_code = sensors.get(sensor)
-    if not is_raspberry_pi():
-        return
-    data_byte = data.to_bytes(1, byteorder="big") + starttime.to_bytes(4, byteorder="big") + endtime.to_bytes(4, byteorder="big")
-    bus = SMBus(1)
-    bus.write_i2c_block_data(module_adress, sensor_code, data_byte)
-    bus.close()  
+def set_data(schedule):
+    #TODO: Change code to write data to json file. JSON-File will be read by another script running with cron 
+    schedule_set_json = schedule.json()
+    with open("schedule.json", "w") as schedule_file:
+        schedule_file.write(schedule_set_json)
+    
 
 
-
+#region setValue
+@app.put("/setValue", tags=["setValue"])
+def setValue(schedule: ScheduleSet):
+    set_data(schedule)
+    return {"message": schedule}
+#endregion
 
 #region Air
 @app.get("/air/quality", tags=["Air"])
@@ -150,35 +148,6 @@ def get_air_fanspeed():
     data = get_data("Air", "FanSpeed")
     return {"Fanspeed": data}
 
-@app.put("/air/manual/temperature", tags=["Air"])
-def put_air_temperature(manual: ManualSet):
-    set_data_instant("Air", "AirTemperature", manual.data)
-    return {"message": manual.data}
-
-@app.put("/air/manual/humidity", tags=["Air"])
-def put_air_humidity(manual: ManualSet):
-    set_data_instant("Air", "AirHumidity", manual.humidity)
-    return {"message": manual.data}
-
-@app.put("/air/manual/fanspeed", tags=["Air"])
-def put_air_fanspeed(manual: ManualSet):
-    set_data_instant("Air", "FanSpeed", manual.fanspeed)
-    return {"message": manual.data}
-
-@app.put("/air/schedule/temperature", tags=["Air"])
-def put_air_schedule_temperature(schedule: ScheduleSet):
-    set_data_schedule("Air", "AirCO2", schedule.data, schedule.starttime, schedule.endtime)
-    return {"message": schedule.data + schedule.starttime + schedule.endtime}
-
-@app.put("/air/schedule/humidity", tags=["Air"])
-def put_air_schedule_humidity(schedule: ScheduleSet):
-    set_data_schedule("Air", "Humidity", schedule.data, schedule.starttime, schedule.endtime)
-    return {"message": schedule.data + schedule.starttime + schedule.endtime}
-
-@app.put("/air/schedule/fanspeed", tags=["Air"])
-def put_air_schedule_fanspeed(schedule: ScheduleSet):
-    set_data_schedule("Air", "FanSpeed", schedule.data, schedule.starttime, schedule.endtime)
-    return {"message": schedule.data + schedule.starttime + schedule.endtime}
 #endregion
 
 #region Water
@@ -197,16 +166,6 @@ def get_water_temperature():
     data = get_data("Water", "WaterTemperature")
     return {"Temperature": data}
 
-@app.put("/water/manual/flow", tags=["Water"])
-def put_water_manual_flow(manual: ManualSet):
-    set_data_instant("Water", "WaterFlow", manual.data)
-    return {"message": manual.data}
-
-@app.put("/water/schedule/flow", tags=["Water"])
-def put_water_schedule_flow(schedule: ScheduleSet):
-    set_data_schedule("Water", "WaterFlow", schedule.data, schedule.starttime, schedule.endtime)
-    return {"message": schedule.data + schedule.starttime + schedule.endtime}
-
 #endregion
 
 #region Sun
@@ -215,15 +174,6 @@ def get_sun_intensity():
     data = get_data("Sun", "SunIntensity")
     return {"Intensity": data}
 
-@app.put("/sun/manual/intensity", tags=["Sun"])
-def put_sun_manual_intensity(manual: ManualSet):
-    set_data_instant("Sun", "SunIntensity", manual.data)
-    return {"message": manual.data}
-
-@app.put("/sun/schedule/intensity", tags=["Sun"])
-def put_sun_schedule_intensity(schedule: ScheduleSet):
-    set_data_schedule("Sun", "SunIntensity", schedule.data, schedule.starttime, schedule.endtime)
-    return {"message": schedule.data + schedule.starttime + schedule.endtime}
 #endregion
 
 #region PSU
