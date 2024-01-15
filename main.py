@@ -281,41 +281,57 @@ def get_sun_intensity():
 @app.get("/psu/voltage", tags=["PSU"])
 def get_psu_voltage():
     data = get_data("PSU", "PSUVoltage")
+    if not is_raspberry_pi():
+        return {"PSUVoltage": randrange(100), "PSUVoltage2": randrange(100)}
     return {"PSUVoltage1": data[0], "PSUVoltage2": data[1]}
 
 @app.get("/psu/current", tags=["PSU"])
 def get_psu_current():
     data = get_data("PSU", "PSUCurrent")
+    if not is_raspberry_pi():
+        return {"PSUCurrent": randrange(100), "PSUCurrent2": randrange(100)}
     return {"PSUCurrent1": data[0], "PSUCurrent2": data[1]}
 
 @app.get("/psu/power", tags=["PSU"])
 def get_psu_power():
     data = get_data("PSU", "PSUPower")
+    if not is_raspberry_pi():
+        return {"PSUPower": randrange(100), "PSUPower2": randrange(100)}
     return {"PSUPower": data[0]/1000, "PSUPower2": data[1]/1000}
 
 @app.get("/psu/gridvoltage", tags=["PSU"])
 def get_psu_gridvoltage():
     data = get_data("PSU", "PSUGridVoltage")
+    if not is_raspberry_pi():
+        return {"PSUGridVoltage": randrange(100), "PSUGridVoltage2": randrange(100)}
     return {"PSUGridVoltage1": data[0], "PSUGridVoltage2": data[1]}
 
 @app.get("/psu/gridcurrent", tags=["PSU"])
 def get_psu_gridcurrent():
     data = get_data("PSU", "PSUGridCurrent")
+    if not is_raspberry_pi():
+        return {"PSUGridCurrent": randrange(100), "PSUGridCurrent2": randrange(100)}
     return {"PSUGridCurrent1": data[0], "PSUGridCurrent2": data[1]}
 
 @app.get("/psu/gridpower", tags=["PSU"])
 def get_psu_gridpower():
     data = get_data("PSU", "PSUGridPower")
+    if not is_raspberry_pi():
+        return {"PSUGridPower": randrange(100), "PSUGridPower2": randrange(100)}
     return {"PSUGridPower": data[0]/10, "PSUGridPower2": data[1]/10}
 
 @app.get("/psu/internaltemperature", tags=["PSU"])
 def get_psu_internaltemperature():
     data = get_data("PSU", "PSUInternalTemperature")
+    if not is_raspberry_pi():
+        return {"PSUInternalTemperature": randrange(100), "PSUInternalTemperature2": randrange(100)}
     return {"PSUInternalTemperature1": data[0]+10, "PSUInternalTemperature2": data[1]+10} #Calibration
 
 @app.get("/psu/fanspeed", tags=["PSU"])
 def get_psu_fanspeed():
     data = get_data("PSU", "PSUFanSpeed")
+    if not is_raspberry_pi():
+        return {"PSUFanSpeed": randrange(100), "PSUFanSpeed2": randrange(100)}
     return {"PSUFanSpeed": data[0], "PSUFanSpeed2": data[1]}
 
 @app.get("/psu/status", tags=["PSU"])
@@ -329,10 +345,10 @@ def get_psu_fault():
     return {"PSUFault": data}
 
 
-@app.post("/psu/clear", tags=["PSU"])
-def clear_psu_fault():
-    set_data_instant("PSU", "PSUFault", 0)
-    return {"message": "All errors cleared"}
+# @app.post("/psu/clear", tags=["PSU"])
+# def clear_psu_fault():
+#     set_data_instant("PSU", "PSUFault", 0)
+#     return {"message": "All errors cleared"}
 #endregion
 
 #region Misc
