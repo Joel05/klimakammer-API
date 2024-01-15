@@ -204,7 +204,6 @@ def get_data(module, sensor):
 
 
 def set_data(schedule):
-    #TODO: Change code to write data to json file. JSON-File will be read by another script running with cron
     schedule_set_json = schedule.json()
     with open("schedule.json", "w") as schedule_file:
         schedule_file.write(schedule_set_json)

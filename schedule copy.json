@@ -1,0 +1,41 @@
+{
+    "UpdateID": 0,
+    "Sonne": [
+        {
+            "intensity": 10,
+            "time": 1705354909
+        },
+        {
+            "intensity": 20,
+            "time": 1705355059
+        },
+        {
+            "intensity": 30,
+            "time": 1705355159
+        },
+        {
+            "intensity": 40,
+            "time": 1705355259
+        },
+        {
+            "intensity": 50,
+            "time": 1705365259
+        },
+        {
+            "intensity": 50,
+            "time": 1705375259
+        }
+    ],
+    "Regen": [
+        {
+            "intensity": 0,
+            "time": 0
+        }
+    ],
+    "Wind": [
+        {
+            "intensity": 50,
+            "time": 0
+        }
+    ]
+}
