@@ -103,7 +103,7 @@ def get_data(module, sensor):
     module_address = modules.get(module)
     sensor_code = sensors.get(sensor)
     if not is_raspberry_pi():
-        return randrange(100)
+        return randrange(100), randrange(100)
     bus = SMBus(1)
     bus.read_i2c_block_data(module_address, sensor_code, 8) #Workaround for bug in Firmware, read is always one step behind
     time.sleep(0.1)
