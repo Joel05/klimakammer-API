@@ -1,10 +1,6 @@
-### TODO: Add support for 2 power supplies, be able to set fan speed
-
-
-
 import struct
 import time
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from random import randrange
@@ -17,6 +13,8 @@ from fastapi.responses import JSONResponse
 
 
 import platform
+
+
 def is_raspberry_pi():
     # Überprüfe, ob die Plattform "linux" und der Prozessor "aarch64" ist
     return platform.machine().startswith('aarch64') and platform.system() == 'Linux'
@@ -114,7 +112,8 @@ tags_metadata = [
     {"name": "Sun", "description": "Endpoints related to sun intensity control"},
     {"name": "PSU", "description": "Endpoints related to power supply unit"},
     {"name": "Misc", "description": "Miscellaneous endpoints"},
-    {"name": "setValue", "description": "Set values"}
+    {"name": "setValue", "description": "Set values"},
+    {"name": "TTS", "description": "Text to speech"}
 ]
 
 app = FastAPI(
@@ -145,11 +144,11 @@ app.add_middleware(
 )
 
 modules = {
-    "Air":0x55,
-    "Water":0x11,
-    "Sun":0x12,
-    "PSU":0x13,
-    "Misc":0x14
+    "Air": 0x55,
+    "Water": 0x11,
+    "Sun": 0x12,
+    "PSU": 0x13,
+    "Misc": 0x14
 }
 
 sensors = {
@@ -173,9 +172,12 @@ sensors = {
     "Door":0x20
 }
 
+
+
 class Value(BaseModel):
     intensity: int
     time: int
+
 
 class ScheduleSet(BaseModel):
     UpdateID: int
@@ -184,15 +186,15 @@ class ScheduleSet(BaseModel):
     Wind: list[Value] | None = None
 
 
-
-#Change to use 32bit floats
+# Change to use 32bit floats
 def get_data(module, sensor):
     module_address = modules.get(module)
     sensor_code = sensors.get(sensor)
     if not is_raspberry_pi():
-        return randrange(100)
+        return randrange(100), randrange(100)
     bus = SMBus(1)
-    bus.read_i2c_block_data(module_address, sensor_code, 8) #Workaround for bug in Firmware, read is always one step behind
+    # Workaround for bug in Firmware, read is always one step behind
+    bus.read_i2c_block_data(module_address, sensor_code, 8)
     time.sleep(0.1)
     data_bytes = bus.read_i2c_block_data(module_address, sensor_code, 8)
     bus.close()
@@ -204,20 +206,29 @@ def get_data(module, sensor):
 
 
 def set_data(schedule):
+    # TODO: Change code to write data to json file. JSON-File will be read by another script running with cron
     schedule_set_json = schedule.json()
     with open("schedule.json", "w") as schedule_file:
         schedule_file.write(schedule_set_json)
 
+# region setValue
+@app.put("/setValue", tags=["setValue"])
+def setValue(schedule: ScheduleSet):
+    set_data(schedule)
+    return {"message": schedule}
 
+ # endregion
+
+# region Air
 
 #region setValue
 @app.put("/setValue", tags=["setValue"])
 def setValue(schedule: ScheduleSet):
     set_data(schedule)
     return {"message": schedule}
-#endregion
 
-#region Air
+ #endregion
+
 @app.get("/air/quality", tags=["Air"])
 def get_air_quality():
     """
@@ -228,45 +239,50 @@ def get_air_quality():
     data = get_data("Air", "AirQuality")
     return {"AirQuality": data}
 
+
 @app.get("/air/co2", tags=["Air"])
 def get_air_CO2():
     data = get_data("Air", "AirCO2")
     return {"CO2": data}
+
 
 @app.get("/air/temperature", tags=["Air"])
 def get_air_temperature():
     data = get_data("Air", "AirTemperature")
     return {"Air": data}
 
+
 @app.get("/air/humidity", tags=["Air"])
 def get_air_humidity():
     data = get_data("Air", "AirHumidity")
     return {"Humidity": data}
+
 
 @app.get("/air/fanspeed", tags=["Air"])
 def get_air_fanspeed():
     data = get_data("Air", "FanSpeed")
     return {"Fanspeed": data}
 
-#endregion
 
-#region Water
+# region Water
 @app.get("/water/level", tags=["Water"])
 def get_water_level():
     data = get_data("Water", "WaterLevel")
     return {"Level": data}
+
 
 @app.get("/water/flow", tags=["Water"])
 def get_water_flow():
     data = get_data("Water", "WaterFlow")
     return {"Flow": data}
 
+
 @app.get("/water/temperature", tags=["Water"])
 def get_water_temperature():
     data = get_data("Water", "WaterTemperature")
     return {"Temperature": data}
 
-#endregion
+ #endregion
 
 #region Sun
 @app.get("/sun/intensity", tags=["Sun"])
@@ -280,77 +296,65 @@ def get_sun_intensity():
 @app.get("/psu/voltage", tags=["PSU"])
 def get_psu_voltage():
     data = get_data("PSU", "PSUVoltage")
-    if not is_raspberry_pi():
-        return {"PSUVoltage": randrange(100), "PSUVoltage2": randrange(100)}
     return {"PSUVoltage1": data[0], "PSUVoltage2": data[1]}
+
 
 @app.get("/psu/current", tags=["PSU"])
 def get_psu_current():
     data = get_data("PSU", "PSUCurrent")
-    if not is_raspberry_pi():
-        return {"PSUCurrent": randrange(100), "PSUCurrent2": randrange(100)}
     return {"PSUCurrent1": data[0], "PSUCurrent2": data[1]}
+
 
 @app.get("/psu/power", tags=["PSU"])
 def get_psu_power():
     data = get_data("PSU", "PSUPower")
-    if not is_raspberry_pi():
-        return {"PSUPower": randrange(100), "PSUPower2": randrange(100)}
     return {"PSUPower": data[0]/1000, "PSUPower2": data[1]/1000}
 
-@app.get("/psu/gridvoltage", tags=["PSU"])
-def get_psu_gridvoltage():
-    data = get_data("PSU", "PSUGridVoltage")
-    if not is_raspberry_pi():
-        return {"PSUGridVoltage": randrange(100), "PSUGridVoltage2": randrange(100)}
-    return {"PSUGridVoltage1": data[0], "PSUGridVoltage2": data[1]}
-
-@app.get("/psu/gridcurrent", tags=["PSU"])
-def get_psu_gridcurrent():
-    data = get_data("PSU", "PSUGridCurrent")
-    if not is_raspberry_pi():
-        return {"PSUGridCurrent": randrange(100), "PSUGridCurrent2": randrange(100)}
-    return {"PSUGridCurrent1": data[0], "PSUGridCurrent2": data[1]}
-
-@app.get("/psu/gridpower", tags=["PSU"])
-def get_psu_gridpower():
-    data = get_data("PSU", "PSUGridPower")
-    if not is_raspberry_pi():
-        return {"PSUGridPower": randrange(100), "PSUGridPower2": randrange(100)}
-    return {"PSUGridPower": data[0]/10, "PSUGridPower2": data[1]/10}
 
 @app.get("/psu/internaltemperature", tags=["PSU"])
 def get_psu_internaltemperature():
     data = get_data("PSU", "PSUInternalTemperature")
-    if not is_raspberry_pi():
-        return {"PSUInternalTemperature": randrange(100), "PSUInternalTemperature2": randrange(100)}
     return {"PSUInternalTemperature1": data[0]+10, "PSUInternalTemperature2": data[1]+10} #Calibration
+
+
+@app.get("/psu/gridvoltage", tags=["PSU"])
+def get_psu_gridvoltage():
+    data = get_data("PSU", "PSUGridVoltage")
+    return {"PSUGridVoltage1": data[0], "PSUGridVoltage2": data[1]}
+
+
+@app.get("/psu/gridcurrent", tags=["PSU"])
+def get_psu_gridcurrent():
+    data = get_data("PSU", "PSUGridCurrent")
+    return {"PSUGridCurrent1": data[0], "PSUGridCurrent2": data[1]}
+
+
+@app.get("/psu/gridpower", tags=["PSU"])
+def get_psu_gridpower():
+    data = get_data("PSU", "PSUGridPower")
+    return {"PSUGridPower": data[0]/10, "PSUGridPower2": data[1]/10}
+
 
 @app.get("/psu/fanspeed", tags=["PSU"])
 def get_psu_fanspeed():
     data = get_data("PSU", "PSUFanSpeed")
-    if not is_raspberry_pi():
-        return {"PSUFanSpeed": randrange(100), "PSUFanSpeed2": randrange(100)}
     return {"PSUFanSpeed": data[0], "PSUFanSpeed2": data[1]}
+
 
 @app.get("/psu/status", tags=["PSU"])
 def get_psu_status():
     data = get_data("PSU", "PSUStatus")
     return {"PSUStatus": data}
 
+
 @app.get("/psu/fault", tags=["PSU"])
 def get_psu_fault():
     data = get_data("PSU", "PSUFault")
     return {"PSUFault": data}
 
+# endregion
 
-# @app.post("/psu/clear", tags=["PSU"])
-# def clear_psu_fault():
-#     set_data_instant("PSU", "PSUFault", 0)
-#     return {"message": "All errors cleared"}
-#endregion
-
-#region Misc
+# region Misc
 @app.get("/misc/door", tags=["Misc"])
 def get_misc_door():
     data = get_data("Misc", "Door")
@@ -385,4 +389,12 @@ def get_hours():
     else:
         # DataFrame not defined or empty
         return JSONResponse(content={"error": "DataFrame is not defined or empty"}, status_code=400)
-#endregion
+
+
+
+
+@app.post("/TTS")
+async def create_upload_file(file: UploadFile):
+    return {"filename": file.filename}
+
+# endregion
