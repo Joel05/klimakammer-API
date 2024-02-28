@@ -1,15 +1,1 @@
-{
-    "UpdateID": 0,
-    "Sonne": [
-        {
-            "intensity": 50,
-            "time": 1705365259
-        },
-        {
-            "intensity": 50,
-            "time": 1705375259
-        }
-    ],
-    "Regen": [],
-    "Wind": []
-}
+{"UpdateID":0,"Sonne":[],"Regen":[],"Wind":[]}

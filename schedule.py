@@ -11,7 +11,7 @@ def is_raspberry_pi():
     return platform.machine().startswith('aarch64') and platform.system() == 'Linux'
 
 modules = {
-    "Air":0x55,
+    "Air":0x70,
     "Water":0x11,
     "Sun":0x12,
     "PSU":0x13,
@@ -23,7 +23,7 @@ sensors = {
     "AirCO2":0x02,
     "AirTemperature":0x03,
     "AirHumidity":0x04,
-    "FanSpeed":0x05,
+    "FanSpeed":0x14,
     "WaterLevel":0x06,
     "WaterFlow":0x07,
     "WaterTemperature":0x08,
@@ -40,7 +40,7 @@ sensors = {
 }
 
 actuators = {
-    "Wind":0x01,
+    "Wind":0x14,
     "Regen":0x02,
     "Sonne":0x04
 }
