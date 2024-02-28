@@ -144,7 +144,7 @@ app.add_middleware(
 )
 
 modules = {
-    "Air": 0x55,
+    "Air": 0x70,
     "Water": 0x11,
     "Sun": 0x12,
     "PSU": 0x13,
@@ -156,7 +156,7 @@ sensors = {
     "AirCO2":0x02,
     "AirTemperature":0x03,
     "AirHumidity":0x04,
-    "FanSpeed":0x05,
+    "FanSpeed":0x14,
     "WaterLevel":0x06,
     "WaterFlow":0x07,
     "WaterTemperature":0x08,
@@ -261,7 +261,7 @@ def get_air_humidity():
 @app.get("/air/fanspeed", tags=["Air"])
 def get_air_fanspeed():
     data = get_data("Air", "FanSpeed")
-    return {"Fanspeed": data}
+    return {"Fan 1 rpm": data[0], "Fan 2 rpm": data[1]}
 
 
 # region Water
