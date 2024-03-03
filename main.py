@@ -144,17 +144,20 @@ app.add_middleware(
 )
 
 modules = {
-    "Air": 0x70,
+    "Sensors": 0x71,
     "Water": 0x11,
     "Sun": 0x12,
     "PSU": 0x13,
-    "Misc": 0x14
+    "Misc": 0x14,
+    "Fans": 0x70
 }
 
 sensors = {
-    "AirQuality":0x01,
-    "AirCO2":0x02,
-    "AirTemperature":0x03,
+    "AirPressure":0x01,
+    "AirTemperature":0x02,
+    "Brightness":0x03,
+    "UV-Brightness":0x04,
+    "AirCO2":0x03,
     "AirHumidity":0x04,
     "FanSpeed":0x14,
     "WaterLevel":0x06,
@@ -229,40 +232,29 @@ def setValue(schedule: ScheduleSet):
 
  #endregion
 
-@app.get("/air/quality", tags=["Air"])
+@app.get("/air/pressure", tags=["Air"])
 def get_air_quality():
-    """
-    Get the air quality data.
-
-    :return: Air quality data.
-    """
-    data = get_data("Air", "AirQuality")
-    return {"AirQuality": data}
-
-
-@app.get("/air/co2", tags=["Air"])
-def get_air_CO2():
-    data = get_data("Air", "AirCO2")
-    return {"CO2": data}
+    data = get_data("Sensors", "AirPressure")
+    return {"AirPressure": data}
 
 
 @app.get("/air/temperature", tags=["Air"])
 def get_air_temperature():
-    data = get_data("Air", "AirTemperature")
-    return {"Air": data}
+    data = get_data("Sensors", "AirTemperature")
+    return {"AirTemperature": data[0]}
 
 
-@app.get("/air/humidity", tags=["Air"])
-def get_air_humidity():
-    data = get_data("Air", "AirHumidity")
-    return {"Humidity": data}
+#endregion
 
+# region Fans
 
-@app.get("/air/fanspeed", tags=["Air"])
+@app.get("/fan/fanspeed", tags=["Fans"])
 def get_air_fanspeed():
-    data = get_data("Air", "FanSpeed")
+    data = get_data("Fans", "FanSpeed")
     return {"Fan 1 rpm": data[0], "Fan 2 rpm": data[1]}
 
+
+#endregion
 
 # region Water
 @app.get("/water/level", tags=["Water"])
@@ -285,10 +277,17 @@ def get_water_temperature():
  #endregion
 
 #region Sun
-@app.get("/sun/intensity", tags=["Sun"])
-def get_sun_intensity():
-    data = get_data("Sun", "SunIntensity")
-    return {"Intensity": data}
+
+@app.get("/sun/brightness", tags=["Sun"])
+def get_sun_brightness():
+    data = get_data("Sensors", "Brightness")
+    return {"SunBrightness": data}
+
+
+@app.get("/sun/uvbrightness", tags=["Sun"])
+def get_sun_uvBrightness():
+    data = get_data("Sensors", "UV-Brightness")
+    return {"UVBrightness": data}
 
 #endregion
 
