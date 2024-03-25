@@ -157,8 +157,7 @@ sensors = {
     "AirTemperature":0x02,
     "Brightness":0x03,
     "UV-Brightness":0x04,
-    "AirCO2":0x03,
-    "AirHumidity":0x04,
+    "AirHumidity":0x05,
     "FanSpeed":0x14,
     "WaterLevel":0x06,
     "WaterFlow":0x07,
@@ -220,9 +219,7 @@ def setValue(schedule: ScheduleSet):
     set_data(schedule)
     return {"message": schedule}
 
- # endregion
-
-# region Air
+# endregion
 
 #region setValue
 @app.put("/setValue", tags=["setValue"])
@@ -232,16 +229,23 @@ def setValue(schedule: ScheduleSet):
 
  #endregion
 
+
+# region Air
 @app.get("/air/pressure", tags=["Air"])
 def get_air_quality():
     data = get_data("Sensors", "AirPressure")
-    return {"AirPressure": data}
+    return {"AirPressure": data[0]}
 
 
 @app.get("/air/temperature", tags=["Air"])
 def get_air_temperature():
     data = get_data("Sensors", "AirTemperature")
     return {"AirTemperature": data[0]}
+
+@app.get("/air/humidity", tags=["Air"])
+def get_air_humidity():
+    data = get_data("Sensors", "AirHumidity")
+    return {"AirHumidity": data[0]}
 
 
 #endregion
