@@ -23,7 +23,7 @@ def is_raspberry_pi():
 if is_raspberry_pi():
     from smbus2 import SMBus
 
-#region hivehours
+# region hivehours
 # Get the current date
 now = datetime.today().strftime('%Y-%m-%d')
 
@@ -74,32 +74,34 @@ response = requests.post(url, headers=headers, data=data)
 
 # Check for errors and print the response
 if response.status_code == 200:
-    totalstring = ((response.json()["data"]["getTimesheetReportingCsvExportData"]))
+    totalstring = (
+        (response.json()["data"]["getTimesheetReportingCsvExportData"]))
 else:
-    print("Query failed to run with a status code of {}. {}".format(response.status_code, data))
+    print("Query failed to run with a status code of {}. {}".format(
+        response.status_code, data))
 
 
-#print(totalstring)
+# print(totalstring)
 
 # Specify column names explicitly
-column_names = ["Person", "Email", "Role", "Project", "Other costs", "Category", "Approver", "Date unit", "Hours", "Date", "Est hours", "Utiliz", "Billed amount", "Utilization Target"]
+column_names = ["Person", "Email", "Role", "Project", "Other costs", "Category", "Approver",
+                "Date unit", "Hours", "Date", "Est hours", "Utiliz", "Billed amount", "Utilization Target"]
 
 
 data = StringIO(totalstring)
 df = pd.read_csv(data, names=column_names, header=None, skiprows=1)
 
-#print(df[["Person", "Email", "Role", "Project", "Other costs", "Category", "Approver", "Date unit", "Date", "Hours", "Est hours", "Utiliz", "Billed amount", "Utilization Target"]])
+# print(df[["Person", "Email", "Role", "Project", "Other costs", "Category", "Approver", "Date unit", "Date", "Hours", "Est hours", "Utiliz", "Billed amount", "Utilization Target"]])
 
 # Convert the 'Hours' column to numeric, to handle any non-numeric entries gracefully
 df['Hours'] = pd.to_numeric(df['Hours'], errors='coerce')
 
 # Calculating total hours
 total_hours = df.groupby("Person")["Hours"].sum()
-#endregion
+# endregion
 
 
-
-description =   """
+description = """
                 All returnvalues are in the range of 0-100.
                 Inputvalues are in the range of 0-100, except for the schedule starttime and endtime, which are in the range of 0-4294967295 (Unix timestamp).
                 """
@@ -153,27 +155,26 @@ modules = {
 }
 
 sensors = {
-    "AirPressure":0x01,
-    "AirTemperature":0x02,
-    "Brightness":0x03,
-    "UV-Brightness":0x04,
-    "AirHumidity":0x05,
-    "FanSpeed":0x14,
-    "WaterLevel":0x06,
-    "WaterFlow":0x07,
-    "WaterTemperature":0x08,
-    "SunIntensity":0x09,
-    "PSUVoltage":0x0A,
-    "PSUCurrent":0x0B,
-    "PSUPower":0x0C,
-    "PSUGridVoltage":0x0D,
-    "PSUGridCurrent":0x0E,
-    "PSUGridPower":0x0F,
-    "PSUInternalTemperature":0x10,
-    "PSUFanSpeed":0x11,
-    "Door":0x20
+    "AirPressure": 0x01,
+    "AirTemperature": 0x02,
+    "Brightness": 0x03,
+    "UV-Brightness": 0x04,
+    "AirHumidity": 0x05,
+    "FanSpeed": 0x14,
+    "WaterLevel": 0x06,
+    "WaterFlow": 0x07,
+    "WaterTemperature": 0x08,
+    "SunIntensity": 0x09,
+    "PSUVoltage": 0x0A,
+    "PSUCurrent": 0x0B,
+    "PSUPower": 0x0C,
+    "PSUGridVoltage": 0x0D,
+    "PSUGridCurrent": 0x0E,
+    "PSUGridPower": 0x0F,
+    "PSUInternalTemperature": 0x10,
+    "PSUFanSpeed": 0x11,
+    "Door": 0x20
 }
-
 
 
 class Value(BaseModel):
@@ -214,6 +215,8 @@ def set_data(schedule):
         schedule_file.write(schedule_set_json)
 
 # region setValue
+
+
 @app.put("/setValue", tags=["setValue"])
 def setValue(schedule: ScheduleSet):
     set_data(schedule)
@@ -221,13 +224,15 @@ def setValue(schedule: ScheduleSet):
 
 # endregion
 
-#region setValue
+# region setValue
+
+
 @app.put("/setValue", tags=["setValue"])
 def setValue(schedule: ScheduleSet):
     set_data(schedule)
     return {"message": schedule}
 
- #endregion
+ # endregion
 
 
 # region Air
@@ -242,13 +247,14 @@ def get_air_temperature():
     data = get_data("Sensors", "AirTemperature")
     return {"AirTemperature": data[0]}
 
+
 @app.get("/air/humidity", tags=["Air"])
 def get_air_humidity():
     data = get_data("Sensors", "AirHumidity")
     return {"AirHumidity": data[0]}
 
 
-#endregion
+# endregion
 
 # region Fans
 
@@ -258,7 +264,7 @@ def get_air_fanspeed():
     return {"Fan 1 rpm": data[0], "Fan 2 rpm": data[1]}
 
 
-#endregion
+# endregion
 
 # region Water
 @app.get("/water/level", tags=["Water"])
@@ -278,9 +284,10 @@ def get_water_temperature():
     data = get_data("Water", "WaterTemperature")
     return {"Temperature": data}
 
- #endregion
+ # endregion
 
-#region Sun
+# region Sun
+
 
 @app.get("/sun/brightness", tags=["Sun"])
 def get_sun_brightness():
@@ -293,9 +300,11 @@ def get_sun_uvBrightness():
     data = get_data("Sensors", "UV-Brightness")
     return {"UVBrightness": data}
 
-#endregion
+# endregion
 
-#region PSU
+# region PSU
+
+
 @app.get("/psu/voltage", tags=["PSU"])
 def get_psu_voltage():
     data = get_data("PSU", "PSUVoltage")
@@ -317,7 +326,8 @@ def get_psu_power():
 @app.get("/psu/internaltemperature", tags=["PSU"])
 def get_psu_internaltemperature():
     data = get_data("PSU", "PSUInternalTemperature")
-    return {"PSUInternalTemperature1": data[0]+10, "PSUInternalTemperature2": data[1]+10} #Calibration
+    # Calibration
+    return {"PSUInternalTemperature1": data[0]+10, "PSUInternalTemperature2": data[1]+10}
 
 
 @app.get("/psu/gridvoltage", tags=["PSU"])
@@ -358,17 +368,20 @@ def get_psu_fault():
 # endregion
 
 # region Misc
+
+
 @app.get("/misc/door", tags=["Misc"])
 def get_misc_door():
     data = get_data("Misc", "Door")
     return {"Door": data}
-#endregion
+# endregion
 
 
-#region Hivehours
+# region Hivehours
 @app.get("/")
 def get_root():
-    return {"Status" : "OK"}
+    return {"Status": "OK"}
+
 
 @app.get("/hours")
 def get_hours():
@@ -383,7 +396,8 @@ def get_hours():
             timestamp = int(time.time())
 
             # Convert to list of dictionaries with 'email', 'Number', and 'timestamp'
-            result = [{"email": person, "Number": hours} for person, hours in total_hours.items()]
+            result = [{"email": person, "Number": hours}
+                      for person, hours in total_hours.items()]
 
             return JSONResponse(content=result)
         else:
@@ -393,11 +407,5 @@ def get_hours():
         # DataFrame not defined or empty
         return JSONResponse(content={"error": "DataFrame is not defined or empty"}, status_code=400)
 
-
-
-
-@app.post("/TTS")
-async def create_upload_file(file: UploadFile):
-    return {"filename": file.filename}
 
 # endregion
