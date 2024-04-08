@@ -139,7 +139,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -364,6 +364,8 @@ def get_psu_fault():
 def get_misc_door():
     data = get_data("Misc", "Door")
     return {"Door": data}
+
+# endregion
 # endregion
 
 
