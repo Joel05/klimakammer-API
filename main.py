@@ -366,8 +366,6 @@ def get_misc_door():
     return {"Door": data}
 
 # endregion
-# endregion
-
 
 # region Hivehours
 @app.get("/")
