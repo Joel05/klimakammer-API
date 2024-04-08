@@ -137,7 +137,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -362,6 +362,8 @@ def get_psu_fault():
 def get_misc_door():
     data = get_data("Misc", "Door")
     return {"Door": data}
+
+# endregion
 #endregion
 
 
@@ -393,11 +395,5 @@ def get_hours():
         # DataFrame not defined or empty
         return JSONResponse(content={"error": "DataFrame is not defined or empty"}, status_code=400)
 
-
-
-
-@app.post("/TTS")
-async def create_upload_file(file: UploadFile):
-    return {"filename": file.filename}
 
 # endregion
