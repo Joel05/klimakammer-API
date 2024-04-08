@@ -114,8 +114,7 @@ tags_metadata = [
     {"name": "Sun", "description": "Endpoints related to sun intensity control"},
     {"name": "PSU", "description": "Endpoints related to power supply unit"},
     {"name": "Misc", "description": "Miscellaneous endpoints"},
-    {"name": "setValue", "description": "Set values"},
-    {"name": "TTS", "description": "Text to speech"}
+    {"name": "setValue", "description": "Set values"}
 ]
 
 app = FastAPI(
