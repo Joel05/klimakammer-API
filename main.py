@@ -224,16 +224,6 @@ def setValue(schedule: ScheduleSet):
 
 # endregion
 
-# region setValue
-
-
-@app.put("/setValue", tags=["setValue"])
-def setValue(schedule: ScheduleSet):
-    set_data(schedule)
-    return {"message": schedule}
-
- # endregion
-
 
 # region Air
 @app.get("/air/pressure", tags=["Air"])
