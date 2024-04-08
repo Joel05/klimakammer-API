@@ -57,7 +57,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -282,15 +282,3 @@ def get_misc_door():
     data = get_data("Misc", "Door")
     return {"Door": data}
 # endregion
-
-
-@app.post("/STT/set", tags=["STT"])
-async def create_upload_file(file: UploadFile):
-    return {"filename": file.filename}
-
-
-@app.get("/STT/get", tags=["STT"])
-def get_STT_cmd():
-    data = '{"Command": 2,"Feature": "Sonne","data": [{"value": 50,"Time": 234875842758},{"value": 99},{"Place": "Wien"}]}'
-    data = "None"
-    return {data}
